@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>EchoMind — an AI that remembers your audience</title>
+<meta name="description" content="EchoMind turns past audience reactions into persistent memory, then recommends your next post from what that audience actually responded to.">
+<style>
+:root{--bg:#f6f6f2;--card:#fff;--ink:#16191f;--mute:#5d6470;--line:#e2e2da;--accent:#0b5d63;--accent-d:#08474c;--tint:#e6f1f1;--amber:#8a4b08;--amber-t:#fbf0e0;--bad:#a4261f;--bad-t:#fceceb;--r:12px}
+*{box-sizing:border-box}html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+h1,h2,h3{font-family:Georgia,"Iowan Old Style",serif;font-weight:600;margin:0;line-height:1.2}
+button,select,textarea,input{font:inherit;color:inherit}
+:focus-visible{outline:3px solid #2b8c94;outline-offset:2px}
+.wrap{max-width:1120px;margin:0 auto;padding:0 20px}
+header.top{border-bottom:1px solid var(--line);background:var(--card)}
+header.top .wrap{display:flex;align-items:center;justify-content:space-between;height:64px;gap:12px}
+.logo{display:flex;align-items:center;gap:10px;font-family:Georgia,serif;font-weight:700;font-size:20px;text-decoration:none;color:inherit}
+.logo i{width:26px;height:26px;border-radius:50%;border:3px solid var(--accent);box-shadow:inset 0 0 0 5px #fff,inset 0 0 0 9px var(--accent);display:block}
+.nav-actions{display:flex;align-items:center;gap:12px}
+.pill{display:inline-flex;align-items:center;gap:8px;font-size:14px;padding:5px 12px;border:1px solid var(--line);border-radius:99px;background:#fff;color:var(--mute)}
+.pill b{width:9px;height:9px;border-radius:50%;background:#b8b8ae}
+.pill.ok b{background:#1d9a5a}.pill.bad b{background:var(--bad)}.pill.wait b{background:#d9a21b;animation:pulse 1.2s infinite}
+@keyframes pulse{50%{opacity:.3}}
+.hero{padding:36px 0 24px}
+.hero h1{font-size:clamp(30px,4.5vw,46px);max-width:18em}
+.hero p{max-width:42em;color:var(--mute);font-size:17px;margin:12px 0 0}
+.loop{display:flex;flex-wrap:wrap;gap:8px;margin-top:16px;font-size:14px;color:var(--mute)}
+.loop span{background:var(--tint);color:var(--accent-d);padding:3px 10px;border-radius:99px;font-weight:600}
+.tabs{display:flex;gap:8px;border-bottom:1px solid var(--line);margin-bottom:24px}
+.tab{background:none;border:none;border-bottom:3px solid transparent;padding:10px 18px;font-weight:600;font-size:15px;color:var(--mute);cursor:pointer}
+.tab.active{color:var(--accent);border-bottom-color:var(--accent)}
+.tab:hover{color:var(--ink)}
+.grid{display:grid;grid-template-columns:minmax(0,5fr) minmax(0,6fr);gap:20px;padding-bottom:56px;align-items:start}
+@media(max-width:860px){.grid{grid-template-columns:1fr}}
+.stack{display:grid;gap:20px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:22px}
+.step{display:flex;align-items:center;gap:10px;margin-bottom:6px}
+.step em{font-style:normal;width:26px;height:26px;border-radius:50%;background:var(--accent);color:#fff;display:grid;place-items:center;font-size:14px;font-weight:700;flex:none}
+.step h2{font-size:21px}
+.sub{color:var(--mute);margin:0 0 14px;font-size:15px}
+label{display:block;font-size:14px;font-weight:600;margin:0 0 6px}
+textarea,select,input[type=text],input[type=url]{width:100%;border:1px solid #c9c9bf;border-radius:8px;padding:11px 12px;background:#fff}
+textarea{min-height:120px;resize:vertical}
+.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:12px}
+.row .grow{flex:1}
+.count{font-size:13px;color:var(--mute)}
+.btn{border:1px solid var(--accent);background:var(--accent);color:#fff;padding:10px 18px;border-radius:8px;font-weight:600;cursor:pointer;min-height:42px;display:inline-flex;align-items:center;justify-content:center}
+.btn:hover{background:var(--accent-d)}
+.btn.alt{background:#fff;color:var(--accent-d)}.btn.alt:hover{background:var(--tint)}
+.btn.sm{padding:6px 12px;min-height:34px;font-size:14px}
+.btn.danger{border-color:var(--bad);background:var(--bad);color:#fff}.btn.danger:hover{opacity:.9}
+.btn[disabled]{opacity:.6;cursor:progress}
+.link{background:none;border:0;color:var(--accent-d);text-decoration:underline;cursor:pointer;padding:6px 0;min-height:36px}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 12px}
+.chip{border:1px dashed #b9b9ae;background:#fafaf6;border-radius:8px;padding:6px 10px;font-size:13.5px;cursor:pointer;text-align:left}
+.chip:hover{border-color:var(--accent);background:var(--tint)}
+.seg{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px}
+.seg button{border:1px solid #c9c9bf;background:#fff;padding:8px 14px;border-radius:99px;cursor:pointer;min-height:40px}
+.seg button[aria-pressed=true]{background:var(--accent);border-color:var(--accent);color:#fff}
+.note{border-radius:8px;padding:11px 14px;font-size:15px;margin-top:14px}
+.note.ok{background:var(--tint);color:var(--accent-d)}.note.err{background:var(--bad-t);color:var(--bad)}.note.info{background:var(--amber-t);color:var(--amber)}
+.note .link{color:inherit;font-weight:600;padding:0}
+.mem{list-style:none;margin:14px 0 0;padding:0;display:grid;gap:8px}
+.mem li{background:#fafaf6;border:1px solid var(--line);border-radius:8px;padding:10px 12px;font-size:15px}
+.empty{border:1px dashed #c9c9bf;border-radius:10px;padding:22px;text-align:center;color:var(--mute)}
+.empty b{display:block;color:var(--ink);font-family:Georgia,serif;font-size:18px;margin-bottom:4px}
+.rec{margin-top:6px}
+.rec .big{font-family:Georgia,serif;font-size:clamp(20px,2.6vw,25px);line-height:1.35;margin:4px 0 16px}
+.k{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--mute);font-weight:700;margin:14px 0 4px}
+.avoid{border-left:4px solid var(--bad);background:var(--bad-t);padding:8px 12px;border-radius:0 8px 8px 0}
+.evi li{border-left:4px solid var(--accent)}
+.delta{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:6px}
+@media(max-width:600px){.delta{grid-template-columns:1fr}}
+.delta div{border:1px solid var(--line);border-radius:10px;padding:12px;font-size:15px;background:#fafaf6}
+.delta .now{border-color:var(--accent);background:var(--tint)}
+.badge{display:inline-block;font-size:12px;font-weight:700;padding:2px 8px;border-radius:99px;background:var(--amber-t);color:var(--amber);margin-bottom:8px}
+.spin{display:inline-block;width:15px;height:15px;border:2px solid currentColor;border-right-color:transparent;border-radius:50%;animation:rot .8s linear infinite;vertical-align:-2px;margin-right:8px}
+@keyframes rot{to{transform:rotate(360deg)}}
+.fade{animation:in .3s ease}
+@keyframes in{from{opacity:0;transform:translateY(6px)}}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+footer{border-top:1px solid var(--line);padding:18px 0;color:var(--mute);font-size:14px}
+/* Profile Section Styles */
+.profile-card{max-width:700px;margin:0 auto}
+.avatar{width:72px;height:72px;border-radius:50%;background:var(--tint);color:var(--accent);display:grid;place-items:center;font-size:28px;font-weight:bold;border:2px solid var(--accent);overflow:hidden}
+.avatar img{width:100%;height:100%;object-fit:cover}
+.profile-header{display:flex;align-items:center;gap:20px;margin-bottom:24px}
+.profile-info h2{font-size:24px;margin-bottom:4px}
+.profile-info p{margin:0;color:var(--mute);font-size:14px}
+.log-item{background:#fafaf6;border:1px solid var(--line);border-radius:8px;padding:12px;font-size:14px;margin-bottom:8px}
+.log-item .meta{display:flex;justify-content:space-between;color:var(--mute);font-size:12px;margin-bottom:4px}
+</style>
+</head>
+<body>
+<header class="top"><div class="wrap">
+  <a class="logo" href="/"><i></i>EchoMind</a>
+  <div class="nav-actions">
+    <div id="pill" class="pill wait" role="status" aria-live="polite"><b></b><span>Connecting…</span></div>
+    <div id="authNav">
+      <!-- Populated dynamically: user pill / signin / signout -->
+    </div>
+  </div>
+</div></header>
+
+<main class="wrap">
+  <section class="hero">
+    <h1>An AI that remembers your audience.</h1>
+    <p>Social teams forget what worked. EchoMind stores every audience reaction as persistent memory and recommends your next post from <em>your</em> audience's history, not generic best practice.</p>
+    <div class="loop" aria-label="How it works"><span>Teach</span>→<span>Remember</span>→<span>Recommend</span>→<span>Learn again</span></div>
+  </section>
+
+  <!-- Navigation Tabs -->
+  <div class="tabs" role="tablist">
+    <button class="tab active" id="tab-dash" onclick="switchTab('dash')">Audience Intelligence Dashboard</button>
+    <button class="tab" id="tab-profile" onclick="switchTab('profile')">User Profile & SQLite Logs</button>
+  </div>
+
+  <!-- Main EchoMind Workspace Tab -->
+  <div id="view-dash">
+    <div class="grid">
+      <div class="stack">
+        <section class="card" aria-labelledby="h1s">
+          <div class="step"><em>1</em><h2 id="h1s">Teach it what happened</h2></div>
+          <p class="sub">Describe a post and how your audience reacted.</p>
+          <div class="chips" aria-label="Example experiences (click to fill)">
+            <button class="chip" type="button" data-ex="Our LinkedIn post with a short Python code snippet got 3x the usual saves; people asked for more concrete examples.">Example: code tip did well</button>
+            <button class="chip" type="button" data-ex="Our generic motivational quote post on LinkedIn got almost no engagement.">Example: motivational post flopped</button>
+          </div>
+          <label for="exp">Audience experience</label>
+          <textarea id="exp" maxlength="2000" placeholder="e.g. Our Instagram reel showing a 30-second before/after got far more shares than our announcement posts."></textarea>
+          <div class="row">
+            <button id="teach" class="btn" type="button">Remember this</button>
+            <span class="count grow" id="cnt">0 / 2000</span>
+          </div>
+          <div id="teachMsg" aria-live="polite"></div>
+          <div class="row"><button id="seed" class="link" type="button">No data handy? Load 4 sample experiences</button></div>
+        </section>
+
+        <section class="card" aria-labelledby="h2s">
+          <div class="step"><em>2</em><h2 id="h2s">See what it remembers</h2></div>
+          <p class="sub">Ask Hindsight what it has retained about your audience.</p>
+          <label for="q">Question (optional)</label>
+          <input id="q" type="text" maxlength="300" placeholder="What did the audience respond positively to?">
+          <div class="row"><button id="recall" class="btn alt" type="button">Recall memory</button></div>
+          <div id="memOut" aria-live="polite"><div class="empty" style="margin-top:14px"><b>Nothing recalled yet</b>Teach it an experience, then recall it here.</div></div>
+        </section>
+      </div>
+
+      <section class="card" aria-labelledby="h3s">
+        <div class="step"><em>3</em><h2 id="h3s">Get your next post</h2></div>
+        <p class="sub">A recommendation grounded in the memories above, with the evidence shown.</p>
+        <div class="seg" role="group" aria-label="Platform" id="seg"></div>
+        <button id="rec" class="btn" type="button">Recommend next post</button>
+        <div id="recOut" aria-live="polite" style="margin-top:6px">
+          <div class="empty" style="margin-top:14px"><b>No recommendation yet</b>Pick a platform and ask. If memory is empty, EchoMind will tell you instead of guessing.</div>
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <!-- User Profile & SQLite Audit Tab -->
+  <div id="view-profile" style="display:none; padding-bottom:56px">
+    <div class="card profile-card">
+      <div class="profile-header">
+        <div class="avatar" id="profAvatar">?</div>
+        <div class="profile-info grow">
+          <h2 id="profName">Loading user…</h2>
+          <p id="profEmail">user@company.com</p>
+          <p id="profJoined" style="margin-top:4px; font-size:12px; color:var(--mute)">Member since …</p>
+        </div>
+        <button class="btn sm alt" onclick="openEditModal()">Edit Profile</button>
+      </div>
+
+      <div style="margin-bottom:24px">
+        <div class="k">Bio</div>
+        <p id="profBio" style="margin:4px 0 0; color:var(--ink)">No bio provided yet.</p>
+      </div>
+
+      <!-- Edit Profile Section (Inline) -->
+      <div id="editBox" style="display:none; border-top:1px solid var(--line); padding-top:20px; margin-bottom:24px">
+        <h3 style="font-size:18px; margin-bottom:12px">Edit Profile Details</h3>
+        <div style="display:grid; gap:12px">
+          <div>
+            <label for="editName">Full Name</label>
+            <input type="text" id="editName">
+          </div>
+          <div>
+            <label for="editBio">Bio</label>
+            <textarea id="editBio" style="min-height:80px"></textarea>
+          </div>
+          <div>
+            <label for="editImg">Profile Image URL (Optional)</label>
+            <input type="url" id="editImg" placeholder="https://example.com/avatar.jpg">
+          </div>
+          <div class="row">
+            <button class="btn sm" type="button" onclick="saveProfile()">Save Changes</button>
+            <button class="btn sm alt" type="button" onclick="closeEditModal()">Cancel</button>
+          </div>
+          <div id="editMsg"></div>
+        </div>
+      </div>
+
+      <div style="border-top:1px solid var(--line); padding-top:20px">
+        <div class="k">SQLite Memory Audit Logs (Authenticated Activity)</div>
+        <p class="sub">Direct proof of <code>Frontend → Backend → SQLite memory_logs</code> persistence for this user.</p>
+        <div id="userLogs"><div class="empty"><b>No logged experiences</b>Experiences you teach while logged in are recorded here.</div></div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<footer><div class="wrap">EchoMind · persistent audience memory powered by Hindsight + SQLite · <span id="taught">0 experiences taught this session</span></div></footer>
+
+<script>
+const PLATFORMS=["LinkedIn","Instagram","YouTube","X"];
+const RECORDED={platform:"LinkedIn",recommendation:"Post a concise, specific code example (under 10 lines) with one sentence on the problem it solves.",why:"Remembered LinkedIn behavior: practical code snippets earned the strongest engagement, while generic motivation did not.",avoid:"Generic motivational quotes."};
+const $=s=>document.querySelector(s);
+const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+let platform="LinkedIn",taught=0,lastRec={},taughtAtRec={};
+
+// Authentication state
+function getToken(){ return localStorage.getItem("echomind_token") }
+function getUser(){
+  try { return JSON.parse(localStorage.getItem("echomind_user")) } catch { return null }
+}
+
+function updateAuthNav(){
+  const token = getToken();
+  const user = getUser();
+  const nav = $("#authNav");
+  if(token && user){
+    nav.innerHTML = `
+      <span class="pill" style="cursor:pointer" onclick="switchTab('profile')"><b></b>${esc(user.name)}</span>
+      <button class="btn sm alt" onclick="logout()">Sign Out</button>
+    `;
+  } else {
+    nav.innerHTML = `
+      <a href="/signin" class="btn sm alt" style="text-decoration:none">Sign In</a>
+      <a href="/signup" class="btn sm" style="text-decoration:none">Sign Up</a>
+    `;
+  }
+}
+
+function logout(){
+  localStorage.removeItem("echomind_token");
+  localStorage.removeItem("echomind_user");
+  window.location.replace("/signin");
+}
+
+// Tab Switching
+function switchTab(t){
+  if(t==='profile'){
+    const token = getToken();
+    if(!token){
+      window.location.href = "/signin";
+      return;
+    }
+    $("#view-dash").style.display = "none";
+    $("#view-profile").style.display = "block";
+    $("#tab-dash").classList.remove("active");
+    $("#tab-profile").classList.add("active");
+    loadProfile();
+  } else {
+    $("#view-dash").style.display = "block";
+    $("#view-profile").style.display = "none";
+    $("#tab-dash").classList.add("active");
+    $("#tab-profile").classList.remove("active");
+  }
+}
+
+async function api(path,opts={},timeout=70000){
+  const ctl=new AbortController(),t=setTimeout(()=>ctl.abort(),timeout);
+  const token=getToken();
+  const headers = {...(opts.headers||{})};
+  if(token){ headers["Authorization"] = `Bearer ${token}` }
+  try{
+    const r=await fetch(path,{...opts,headers,signal:ctl.signal});
+    let d=null;try{d=await r.json()}catch{}
+    if(!r.ok)throw{message:d?.detail||d?.error?.message||`Request failed (${r.status}).`,hint:d?.error?.hint||"Please try again."};
+    if(!d)throw{message:"The server sent an unreadable response.",hint:"Please try again."};
+    return d;
+  }catch(e){
+    if(e.name==="AbortError")throw{message:"The server took too long to respond.",hint:"On free hosting it may be waking up; retry in ~20 seconds."};
+    if(e instanceof TypeError)throw{message:"Can't reach the EchoMind server.",hint:"Check your connection and retry."};
+    throw e;
+  }finally{clearTimeout(t)}
+}
+
+const errNote=(e,retryId)=>`<div class="note err" role="alert"><strong>${esc(e.message)}</strong> ${esc(e.hint||"")}${retryId?` <button class="link" data-retry="${retryId}">Retry</button>`:""}</div>`;
+function busy(btn,on,label){btn.disabled=on;if(on){btn.dataset.l=btn.textContent;btn.innerHTML=`<span class="spin"></span>${label}`}else btn.textContent=btn.dataset.l||btn.textContent}
+
+/* Status check */
+async function checkStatus(){
+  const p=$("#pill"),set=(c,t)=>{p.className="pill "+c;p.querySelector("span").textContent=t};
+  try{const s=await api("/api/status",{},65000);
+    if(s.reachable)set("ok","Memory online · bank "+s.bank);
+    else set("bad",s.configured?"Memory service unreachable":"Memory not configured");
+  }catch{set("bad","Server unreachable")}
+}
+
+/* Platform picker */
+const seg=$("#seg");
+PLATFORMS.forEach(p=>{const b=document.createElement("button");b.type="button";b.textContent=p;b.setAttribute("aria-pressed",p===platform);b.onclick=()=>{platform=p;[...seg.children].forEach(x=>x.setAttribute("aria-pressed",x.textContent===p))};seg.appendChild(b)});
+
+/* Step 1: Teach */
+const exp=$("#exp");
+exp.addEventListener("input",()=>$("#cnt").textContent=`${exp.value.length} / 2000`);
+exp.addEventListener("keydown",e=>{if(e.key==="Enter"&&(e.ctrlKey||e.metaKey))teach()});
+document.querySelectorAll(".chip").forEach(c=>c.onclick=()=>{exp.value=c.dataset.ex;exp.dispatchEvent(new Event("input"));exp.focus()});
+
+async function teach(){
+  const text=exp.value.trim(),out=$("#teachMsg"),btn=$("#teach");
+  if(text.length<3){out.innerHTML=`<div class="note err" role="alert">Describe what happened first (at least a few words).</div>`;exp.focus();return}
+  busy(btn,true,"Remembering…");out.innerHTML="";
+  try{
+    await api("/learn",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({content:text,context:"Audience experience",platform:platform})});
+    taught++;$("#taught").textContent=`${taught} experience${taught>1?"s":""} taught this session`;exp.value="";exp.dispatchEvent(new Event("input"));
+    out.innerHTML=`<div class="note ok fade">Stored in Hindsight AI memory & logged to SQLite. <button class="link" data-act="recall">Recall memory</button></div>`;
+  }catch(e){out.innerHTML=errNote(e)}finally{busy(btn,false)}
+}
+$("#teach").onclick=teach;
+
+$("#seed").onclick=async()=>{
+  const out=$("#teachMsg");out.innerHTML=`<div class="note info"><span class="spin"></span>Storing sample experiences…</div>`;
+  try{const r=await api("/api/demo/seed",{method:"POST"});
+    if(r.added)taught+=r.added;
+    out.innerHTML=`<div class="note ok fade">${esc(r.message)} These are labelled <b>SAMPLE DATA</b> in memory. Give it a few seconds, then <button class="link" data-act="recall">recall memory</button>.</div>`;
+  }catch(e){out.innerHTML=errNote(e)}
+};
+
+/* Step 2: Recall */
+async function recall(){
+  const out=$("#memOut"),btn=$("#recall"),q=$("#q").value.trim();
+  busy(btn,true,"Recalling…");
+  try{
+    const d=await api("/memory"+(q?`?q=${encodeURIComponent(q)}`:""));
+    out.innerHTML=d.memories.length
+      ?`<ul class="mem fade">${d.memories.map(m=>`<li>${esc(m)}</li>`).join("")}</ul><p class="count">${d.memories.length} relevant memor${d.memories.length>1?"ies":"y"} surfaced for this question.</p>`
+      :`<div class="empty fade" style="margin-top:14px"><b>No memories match yet</b>Add an experience in step 1 (indexing can take a few seconds), or try a broader question.</div>`;
+  }catch(e){out.innerHTML=errNote(e,"recall")}finally{busy(btn,false)}
+}
+$("#recall").onclick=recall;
+
+/* Step 3: Recommend */
+async function recommend(){
+  const out=$("#recOut"),btn=$("#rec"),p=platform;
+  busy(btn,true,"Reasoning over memory…");
+  try{
+    const d=await api("/recommendation?platform="+encodeURIComponent(p),{},80000);
+    if(d.state==="no_memory"){
+      out.innerHTML=`<div class="empty fade" style="margin-top:14px"><b>No ${esc(p)} memory to reason from</b>EchoMind won't guess. Teach it an experience in step 1 (or load the samples), wait a few seconds, then try again.</div>`;return;
+    }
+    const prev=lastRec[p],changed=prev&&taught>(taughtAtRec[p]||0)&&prev!==d.recommendation;
+    lastRec[p]=d.recommendation;taughtAtRec[p]=taught;
+    out.innerHTML=`<div class="rec fade">
+      <div class="k">Recommended for ${esc(p)}</div>
+      <p class="big">${esc(d.recommendation)}</p>
+      ${d.why?`<div class="k">Why (from memory)</div><p style="margin:0">${esc(d.why)}</p>`:""}
+      ${d.avoid?`<div class="k">Avoid</div><p class="avoid" style="margin:0">${esc(d.avoid)}</p>`:""}
+      <div class="k">Evidence recalled (${d.memories.length})</div>
+      <ul class="mem evi">${d.memories.map(m=>`<li>${esc(m)}</li>`).join("")}</ul>
+      ${changed?`<div class="k">What changed after you taught it more</div><div class="delta"><div><span class="badge">Before</span><br>${esc(prev)}</div><div class="now"><span class="badge" style="background:#fff">Now</span><br>${esc(d.recommendation)}</div></div>`:""}
+      <p class="count" style="margin-top:14px">Teach it how this post performs to keep improving the loop.</p></div>`;
+  }catch(e){
+    out.innerHTML=errNote(e,"rec")+`<div class="note info">Live service unavailable? <button class="link" data-act="recorded">Show a recorded example (not live)</button></div>`;
+  }finally{busy(btn,false)}
+}
+$("#rec").onclick=recommend;
+
+/* Profile & SQLite Audit Log functions */
+async function loadProfile(){
+  try{
+    const user = await api("/users/me");
+    localStorage.setItem("echomind_user", JSON.stringify(user));
+    $("#profName").textContent = user.name;
+    $("#profEmail").textContent = user.email;
+    $("#profBio").textContent = user.bio || "No bio added yet.";
+    $("#profJoined").textContent = "Member since " + new Date(user.created_at).toLocaleDateString();
+    
+    const av = $("#profAvatar");
+    if(user.profile_image){
+      av.innerHTML = `<img src="${esc(user.profile_image)}" alt="${esc(user.name)}">`;
+    } else {
+      av.textContent = user.name.charAt(0).toUpperCase();
+    }
+
+    // Also load memory logs from SQLite
+    const logs = await api("/users/me/memories");
+    const container = $("#userLogs");
+    if(logs && logs.length){
+      container.innerHTML = logs.map(l => `
+        <div class="log-item fade">
+          <div class="meta">
+            <span><strong>Platform:</strong> ${esc(l.platform)} · <strong>Bank:</strong> ${esc(l.hindsight_bank)}</span>
+            <span>${new Date(l.created_at).toLocaleString()}</span>
+          </div>
+          <div>${esc(l.content)}</div>
+        </div>
+      `).join("");
+    } else {
+      container.innerHTML = `<div class="empty"><b>No logged experiences yet</b>Experiences you teach while logged in are logged to SQLite.</div>`;
+    }
+  } catch(e){
+    if(e.message?.includes("401") || e.message?.includes("Authentication")){
+      logout();
+    }
+  }
+}
+
+function openEditModal(){
+  const user = getUser();
+  if(!user) return;
+  $("#editName").value = user.name || "";
+  $("#editBio").value = user.bio || "";
+  $("#editImg").value = user.profile_image || "";
+  $("#editBox").style.display = "block";
+}
+
+function closeEditModal(){
+  $("#editBox").style.display = "none";
+}
+
+async function saveProfile(){
+  const name = $("#editName").value.trim();
+  const bio = $("#editBio").value.trim();
+  const profile_image = $("#editImg").value.trim();
+  const msg = $("#editMsg");
+  msg.innerHTML = '<span class="spin"></span>Saving…';
+  try{
+    const updated = await api("/users/me", {
+      method: "PUT",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({name, bio, profile_image})
+    });
+    localStorage.setItem("echomind_user", JSON.stringify(updated));
+    updateAuthNav();
+    loadProfile();
+    closeEditModal();
+    msg.innerHTML = "";
+  } catch(e){
+    msg.innerHTML = `<div class="note err">${esc(e.message)}</div>`;
+  }
+}
+
+document.addEventListener("click",e=>{
+  const t=e.target.closest("[data-act],[data-retry]");if(!t)return;
+  if(t.dataset.act==="recall"||t.dataset.retry==="recall")recall();
+  if(t.dataset.retry==="rec")recommend();
+  if(t.dataset.act==="recorded")$("#recOut").innerHTML=`<div class="rec fade"><span class="badge">Recorded example · not generated live</span><div class="k">Recommended for ${RECORDED.platform}</div><p class="big">${esc(RECORDED.recommendation)}</p><div class="k">Why</div><p style="margin:0">${esc(RECORDED.why)}</p><div class="k">Avoid</div><p class="avoid" style="margin:0">${esc(RECORDED.avoid)}</p></div>`;
+});
+
+// Init
+updateAuthNav();
+checkStatus();
+</script>
+</body>
+</html>
